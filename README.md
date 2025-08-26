@@ -76,3 +76,6 @@ No. After interviewing, please change any solutions shared publicly to be privat
 
 ### Q. Do I have to spend money out of my own pocket to complete the quest?
 No. There are many possible solutions to this quest that would be zero cost to you when using [AWS](https://aws.amazon.com/free), [GCP](https://cloud.google.com/free), or [Azure](https://azure.microsoft.com/en-us/pricing/free-services).
+
+### Q. Can I use AI to assist me?
+You may use AI as a reference tool but there will be a strong expectation to exhibit the same expertise and understanding from your submission in your interview. In addition we encourage you to be open about any usage! Please document what you used, what your prompts were, how it helped, what it got wrong, etc.
