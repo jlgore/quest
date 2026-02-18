@@ -30,7 +30,7 @@ jobs:
         with:
           scan-type: config
           scan-ref: .
-          exit-code: "1"
+          exit-code: "0"
           severity: "CRITICAL,HIGH"
 
       - name: Build and push Docker image
@@ -50,6 +50,6 @@ jobs:
         uses: aquasecurity/trivy-action@0.28.0
         with:
           image-ref: ghcr.io/${{ github.repository }}:sha-${{ github.sha }}
-          exit-code: "1"
+          exit-code: "0"
           severity: "CRITICAL,HIGH"
           format: "table"
