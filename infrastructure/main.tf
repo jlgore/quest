@@ -6,3 +6,11 @@ module "aws" {
   image_tag          = var.image_tag
   secret_word_value  = var.secret_word_value
 }
+
+module "azure" {
+  source = "./modules/azure"
+
+  image_tag          = var.image_tag
+  secret_word_value  = var.secret_word_value
+  cloudflare_zone_id = var.cloudflare_zone_id
+}
