@@ -4,12 +4,19 @@
   "description": "",
   "main": "src/000.js",
   "scripts": {
-    "start": "node src/000.js"
+    "start": "node src/000.js",
+    "proofs:aws": "cross-env QUEST_PROVIDER=aws npx playwright test"
   },
   "dependencies": {
-    "express": "~4.16.3"
+    "express": "~4.16.3",
+    "playwright": "^1.58.2"
   },
   "keywords": [],
   "author": "Rearc",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "@types/node": "^25.2.3",
+    "cross-env": "^10.1.0"
+  }
 }
