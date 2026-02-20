@@ -39,3 +39,28 @@ This is not a "security" project per-se but this is table stakes for any secure 
 
 You can tell the difference between long lived keys in AWS because they all start with `AKIA` like this: `AKIAIOSFODNN7EXAMPLE`. Short lived keys in AWS start with `ASIA` and look something like this: `ASIAY34FZKBOKMUTVV7`. [Up with AWS ASIA keys!](https://docs.aws.amazon.com/IAM/latest/UserGuide/securing_access-keys.html#Using_access-keys-audit)
 
+#### Azure
+
+I threw together a Terraform module for Azure to handle the following:
+
+- Resource Group creation in East US
+- Azure Container App Environment and Container App deployment
+- Azure Key Vault for storing the `SECRET_WORD` secret
+- Key Vault RBAC Role Assignment for the Container App's SystemAssigned Managed Identity
+- Log Analytics Workspace for container logging
+- CloudFlare DNS CNAME Record for the Container App FQDN
+
+![I assure you we're open](./assets/unnamed.jpg)
+
+LMAO I am not sure why but the go binaries do not see it running in Azure (I assure you, we're running in Azure). I tried to troubleshoot as best I could but perhaps there is an edge case in how the binaries are trying to hit the IDMS endpoints once being called (I did poke around with `strings` on the binary and think it can't account for Azure Container Apps not exposing an identity metadata service). If I had more time I would swap over to Azure Container Instances just to get all the tests green. 
+
+I performed the same OIDC federation between my personal Entra ID tenant and my GitHub repo for this just as an extra challenge. Shocking that two Microsoft products work well together! I will admit I have less hot takes about Azure: Blue cloud slow! Web interface bad! If money was no object I would have done this on AKS because I am a masochist. I will admit I have a leg up here because I spend many hours yelling at Container App Environments during "the work day" :-)
+
+Claude did help me add a few `az-api` provider resources to help with managed certificate generation. This absolute hack wouldn't be possible without the `azurerm` provider - thanks for the bugs, the hugs, and the missing resources.
+
+For the Azure module documentation please refer to the `terraform-docs` [generated documentation](./modules/azure/README.md).
+
+
+#### Cloudflare
+
+I've been looking for a reason to play with Cloudflare's new Container runtime. They are my current cloud provider of choice for many things and the $5 paid workers plan are like five of the best dollars I spend every month. Technically it's like 20 bucks because I am Cloudflare Total TLS™️customer (sorry to brag). You'll notice all my `cloudflare` resources feature `proxy=false` because if I proxied everything through Cloudflare and terminated SSL at Cloudflare it wouldn't be very much in the spirit of the exercise. Anyway, 
