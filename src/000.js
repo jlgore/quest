@@ -2,6 +2,8 @@ const express = require('express')
 const app = express()
 const port = 3000
 
+app.get('/healthz', (req, res) => res.sendStatus(200))
+
 app.get('/', function (req, res) {
 const { exec } = require('child_process');
 exec('bin/001', (err, stdout, stderr) => {

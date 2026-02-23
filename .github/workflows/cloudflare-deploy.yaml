@@ -1,0 +1,45 @@
+name: Cloudflare Deploy
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["master"]
+    paths:
+      - "cloudflare/**"
+      - "Dockerfile"
+      - "src/**"
+      - "bin/**"
+      - "package*.json"
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy to Cloudflare Containers
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: cloudflare
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+          cache-dependency-path: cloudflare/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Deploy with Wrangler
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          workingDirectory: cloudflare
+          command: deploy
+          postCommands: |
+            echo "${{ secrets.SECRET_WORD_VALUE }}" | wrangler secret put SECRET_WORD
