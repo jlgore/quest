@@ -1,0 +1,163 @@
+name: Screenshot Proofs
+
+on:
+  workflow_dispatch:
+    inputs:
+      provider:
+        description: "Cloud provider to test"
+        required: true
+        type: choice
+        options:
+          - all
+          - aws
+          - azure
+          - cloudflare
+      run_label:
+        description: "Phase label (e.g. discovery, validation)"
+        required: false
+        default: "discovery"
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  # ── Job 1: Convert provider input to matrix JSON ──────────────────────────
+  resolve-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set.outputs.matrix }}
+    steps:
+      - id: set
+        run: |
+          if [ "${{ inputs.provider }}" = "all" ]; then
+            echo 'matrix=["aws","azure","cloudflare"]' >> "$GITHUB_OUTPUT"
+          else
+            echo 'matrix=["${{ inputs.provider }}"]' >> "$GITHUB_OUTPUT"
+          fi
+
+  # ── Job 2: Run Playwright tests per provider ──────────────────────────────
+  test:
+    needs: resolve-matrix
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        provider: ${{ fromJson(needs.resolve-matrix.outputs.matrix) }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run screenshot tests
+        continue-on-error: true
+        run: QUEST_PROVIDER=${{ matrix.provider }} npx playwright test
+
+      - name: Upload proofs artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: proofs-${{ matrix.provider }}
+          path: proofs/${{ matrix.provider }}/
+          if-no-files-found: ignore
+
+  # ── Job 3: Commit proofs & comment on PR ──────────────────────────────────
+  commit-and-comment:
+    needs: [resolve-matrix, test]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref }}
+
+      - name: Download all proof artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: proofs-*
+          path: _artifacts
+
+      - name: Merge artifacts into proofs/
+        run: |
+          for dir in _artifacts/proofs-*/; do
+            provider=$(basename "$dir" | sed 's/^proofs-//')
+            mkdir -p "proofs/$provider"
+            cp -r "$dir"* "proofs/$provider/" 2>/dev/null || true
+          done
+          rm -rf _artifacts
+
+      - name: Commit and push proofs
+        id: commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add proofs/
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            echo "committed=false" >> "$GITHUB_OUTPUT"
+          else
+            git commit -m "proofs: ${{ inputs.run_label }} — ${{ inputs.provider }} [${{ github.run_number }}]"
+            git push
+            echo "committed=true" >> "$GITHUB_OUTPUT"
+            echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Comment on PR
+        if: steps.commit.outputs.committed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          BRANCH="${GITHUB_REF#refs/heads/}"
+          PR_NUMBER=$(gh pr list --head "$BRANCH" --json number --jq '.[0].number' 2>/dev/null || true)
+
+          if [ -z "$PR_NUMBER" ]; then
+            echo "No open PR found for branch $BRANCH — skipping comment"
+            exit 0
+          fi
+
+          COMMIT_SHA="${{ steps.commit.outputs.sha }}"
+          REPO="${{ github.repository }}"
+          RAW_BASE="https://raw.githubusercontent.com/${REPO}/${COMMIT_SHA}"
+          PROVIDERS='${{ needs.resolve-matrix.outputs.matrix }}'
+
+          # Build the comment body
+          BODY="## 📸 Screenshot Proofs — \`${{ inputs.run_label }}\`"
+          BODY="${BODY}\n\n**Provider(s):** \`${{ inputs.provider }}\` | **Commit:** \`${COMMIT_SHA:0:7}\` | **[Workflow Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})**"
+
+          for provider in $(echo "$PROVIDERS" | jq -r '.[]'); do
+            BODY="${BODY}\n\n---\n### ☁️ ${provider}\n"
+            BODY="${BODY}\n| Page | Screenshot |"
+            BODY="${BODY}\n|------|-----------|"
+
+            for img in 01-index 02-docker 03-secret-word 04-load-balancer 05-tls; do
+              IMG_URL="${RAW_BASE}/proofs/${provider}/${img}.png"
+              BODY="${BODY}\n| \`${img}\` | ![${img}](${IMG_URL}) |"
+            done
+
+            CERT_URL="${RAW_BASE}/proofs/${provider}/tls-certificate-info.json"
+            BODY="${BODY}\n\n<details><summary>🔒 TLS Certificate Info</summary>\n"
+            # Try to read the cert file if it exists locally
+            CERT_FILE="proofs/${provider}/tls-certificate-info.json"
+            if [ -f "$CERT_FILE" ]; then
+              BODY="${BODY}\n\`\`\`json\n$(cat "$CERT_FILE")\n\`\`\`"
+            else
+              BODY="${BODY}\n_No TLS certificate info captured._"
+            fi
+            BODY="${BODY}\n\n</details>"
+          done
+
+          echo -e "$BODY" | gh pr comment "$PR_NUMBER" --body-file -

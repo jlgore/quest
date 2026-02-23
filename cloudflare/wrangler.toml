@@ -1,0 +1,24 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "quest"
+main = "src/index.ts"
+compatibility_date = "2026-02-20"
+
+[observability]
+enabled = true
+
+[[containers]]
+class_name = "QuestContainer"
+image = "../Dockerfile"
+max_instances = 3
+
+[[durable_objects.bindings]]
+name = "QUEST_CONTAINER"
+class_name = "QuestContainer"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["QuestContainer"]
+
+[[routes]]
+pattern = "quest.cf.shart.cloud"
+custom_domain = true
