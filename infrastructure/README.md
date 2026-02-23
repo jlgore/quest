@@ -56,7 +56,7 @@ LMAO I am not sure why but the go binaries do not see it running in Azure (I ass
 
 I performed the same OIDC federation between my personal Entra ID tenant and my GitHub repo for this just as an extra challenge. Shocking that two Microsoft products work well together! I will admit I have less hot takes about Azure: Blue cloud slow! Web interface bad! If money was no object I would have done this on AKS because I am a masochist. I will admit I have a leg up here because I spend many hours yelling at Container App Environments during "the work day" :-)
 
-Claude did help me add a few `az-api` provider resources to help with managed certificate generation. This absolute hack wouldn't be possible without the `azurerm` provider - thanks for the bugs, the hugs, and the missing resources.
+Claude did help me add a few `az-api` provider resources to help with managed certificate generation. This absolute hack wouldn't be possible without the `azurerm` provider - thanks for the bugs, the hugs, and the missing resources. Also a few runs for Azure OIDC failed due to propagation time of policy and some transient OIDC errors. 
 
 For the Azure module documentation please refer to the `terraform-docs` [generated documentation](./modules/azure/README.md).
 
