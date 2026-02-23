@@ -64,6 +64,9 @@ resource "azurerm_container_app" "this" {
   }
 
   template {
+    # Force new revision when the Key Vault secret value changes
+    revision_suffix = substr(azurerm_key_vault_secret.secret_word.version, 0, 10)
+
     container {
       name   = "quest"
       image  = "ghcr.io/jlgore/quest:${var.image_tag}"
