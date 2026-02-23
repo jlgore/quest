@@ -1,0 +1,9 @@
+{
+  "provider": "cloudflare",
+  "url": "https://quest.cf.shart.cloud",
+  "issuer": "WE1",
+  "protocol": "TLS 1.3",
+  "validFrom": "2026-02-22T22:31:20.000Z",
+  "validTo": "2026-05-23T23:31:17.000Z",
+  "capturedAt": "2026-02-23T17:26:00.127Z"
+}
