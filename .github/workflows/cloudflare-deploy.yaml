@@ -44,4 +44,4 @@ jobs:
           packageManager: npm
           command: deploy
           postCommands: |
-            echo "${{ secrets.SECRET_WORD_VALUE }}" | wrangler secret put SECRET_WORD
+            echo "${{ secrets.SECRET_WORD_VALUE }}" | npx wrangler secret put SECRET_WORD
