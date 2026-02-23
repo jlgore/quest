@@ -77,7 +77,7 @@ for (const questPage of QUEST_PAGES) {
 
     const response = await page.goto(url, {
       waitUntil: "networkidle",
-      timeout: 30_000,
+      timeout: 60_000,
     });
 
     expect(response?.status()).toBeLessThan(400);

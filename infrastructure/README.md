@@ -65,4 +65,34 @@ For the Azure module documentation please refer to the `terraform-docs` [generat
 
 I've been looking for a reason to play with Cloudflare's new Container runtime. They are my current cloud provider of choice for many things and the $5 paid workers plan are like five of the best dollars I spend every month. Technically it's like 20 bucks because I am Cloudflare Total TLS™️customer (sorry to brag). You'll notice all my `cloudflare` resources feature `proxy=false` because if I proxied everything through Cloudflare and terminated SSL at Cloudflare it wouldn't be very much in the spirit of the `/tls` exercise. Anyway, Cloudflare's Terraform provider is like every one of us - improving every day. Today there is no Terraform resources in the Cloudflare provider to manage containers. `wrangler` is the preferred tool for many Cloudflare Worker configs. Also Cloudflare doesn't support any OIDC flows as far as I am aware, so we had to deploy via a long lived secret. Claude helped me brave the waters, but the service was down for me sunday night so I'm a bit delayed. I did have to add a health check to make the Cloudflare container deployment work because the service was failing health checks on `/` (assuming the golang binary firing took longer than the health check to wait for a return). The `/loadbalancer` endpoint doesn't detect but I am guessing that's due to the [Durable Object](https://developers.cloudflare.com/durable-objects/) fronting the container and not a traditional cloud load balancer. 
 
-Thank you for joining me on this journey, you can check the `../proofs` directory for the two flows of requests for each cloud platform. I did have AI help because I write plays but I'm not a playwright. 
+Thank you for joining me on this journey, you can check the `../proofs` directory for the two flows of requests for each cloud platform. I did have AI help because I write plays but I'm not a playwright.
+
+#### Screenshot Proofs
+
+Automated proof-of-completion screenshots are captured via the [Screenshot Proofs](../.github/workflows/screenshot-proofs.yaml) GitHub Actions workflow. This workflow uses [Playwright](https://playwright.dev/) to visit each quest verification endpoint, validate the response, and save a full-page screenshot.
+
+**Viewing workflow runs:**
+
+Head to the [Actions tab](https://github.com/jlgore/quest/actions/workflows/screenshot-proofs.yaml) to see all proof runs. Each run is triggered manually via `workflow_dispatch` with two inputs:
+
+- **provider** — which cloud provider(s) to test (`all`, `aws`, `azure`, or `cloudflare`)
+- **run_label** — the phase label, either `discovery` or `validation`
+
+**Where proofs live:**
+
+Proofs are committed back to the repo under [`../proofs/`](../proofs/) with the following structure:
+
+```
+proofs/
+├── aws/
+│   ├── discovery/       # initial deployment proof
+│   └── validation/      # post-change proof
+├── azure/
+│   ├── discovery/
+│   └── validation/
+└── cloudflare/
+    ├── discovery/
+    └── validation/
+```
+
+Each phase directory contains a screenshot for every quest endpoint (`01-index.png` through `05-tls.png`) and a `tls-certificate-info.json` with certificate details. If the workflow is run from a branch with an open PR, it will also post a comment on the PR with the screenshots embedded inline.
