@@ -82,16 +82,16 @@ for (const questPage of QUEST_PAGES) {
 
     expect(response?.status()).toBeLessThan(400);
 
+    // Save screenshot first — capture proof regardless of content check
+    const screenshotPath = path.join(PROOFS_DIR, `${questPage.name}.png`);
+    await page.screenshot({ path: screenshotPath, fullPage: true });
+    console.log(`  ✅ ${screenshotPath}`);
+
     // Verify expected content is on the page
     const body = await page.textContent("body");
     if (body && questPage.expectText) {
       expect(body).toMatch(questPage.expectText);
     }
-
-    // Save screenshot
-    const screenshotPath = path.join(PROOFS_DIR, `${questPage.name}.png`);
-    await page.screenshot({ path: screenshotPath, fullPage: true });
-    console.log(`  ✅ ${screenshotPath}`);
   });
 }
 
