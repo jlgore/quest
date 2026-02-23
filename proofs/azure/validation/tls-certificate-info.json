@@ -1,0 +1,9 @@
+{
+  "provider": "azure",
+  "url": "https://quest.azure.shart.cloud",
+  "issuer": "GeoTrust TLS RSA CA G1",
+  "protocol": "TLS 1.3",
+  "validFrom": "2026-02-20T00:00:00.000Z",
+  "validTo": "2026-08-20T23:59:59.000Z",
+  "capturedAt": "2026-02-23T20:22:55.979Z"
+}
