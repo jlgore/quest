@@ -46,6 +46,12 @@ resource "aws_ecs_task_definition" "this" {
         name = "SECRET_WORD"
         valueFrom = aws_secretsmanager_secret.this.arn
       }]
+      # Tracks the secret version — when the secret value changes, this changes
+      # the container definition JSON, creating a new task def revision and
+      # triggering ECS to deploy new tasks that pick up the updated secret
+      dockerLabels = {
+        "quest.secret-version" = aws_secretsmanager_secret_version.this.version_id
+      }
       portMappings = [
         {
           containerPort = 3000
@@ -65,11 +71,12 @@ resource "aws_ecs_task_definition" "this" {
 }
 
 resource "aws_ecs_service" "this" {
-  name            = "quest-ecs-service-def"
-  cluster         = aws_ecs_cluster.this.id
-  task_definition = aws_ecs_task_definition.this.arn
-  desired_count   = 1
-  launch_type     = "FARGATE"
+  name                 = "quest-ecs-service-def"
+  cluster              = aws_ecs_cluster.this.id
+  task_definition      = aws_ecs_task_definition.this.arn
+  desired_count        = 1
+  launch_type          = "FARGATE"
+  force_new_deployment = true
   depends_on      = [aws_iam_role_policy.this, aws_lb_listener.this]
 
   network_configuration {
