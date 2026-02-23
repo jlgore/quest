@@ -64,14 +64,14 @@ jobs:
 
       - name: Run screenshot tests
         continue-on-error: true
-        run: QUEST_PROVIDER=${{ matrix.provider }} npx playwright test
+        run: QUEST_PROVIDER=${{ matrix.provider }} QUEST_PHASE=${{ inputs.run_label }} npx playwright test
 
       - name: Upload proofs artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: proofs-${{ matrix.provider }}
-          path: proofs/${{ matrix.provider }}/
+          path: proofs/${{ matrix.provider }}/${{ inputs.run_label }}/
           if-no-files-found: ignore
 
   # ── Job 3: Commit proofs & comment on PR ──────────────────────────────────
@@ -93,10 +93,11 @@ jobs:
 
       - name: Merge artifacts into proofs/
         run: |
+          PHASE="${{ inputs.run_label }}"
           for dir in _artifacts/proofs-*/; do
             provider=$(basename "$dir" | sed 's/^proofs-//')
-            mkdir -p "proofs/$provider"
-            cp -r "$dir"* "proofs/$provider/" 2>/dev/null || true
+            mkdir -p "proofs/$provider/$PHASE"
+            cp -r "$dir"* "proofs/$provider/$PHASE/" 2>/dev/null || true
           done
           rm -rf _artifacts
 
@@ -143,15 +144,16 @@ jobs:
             BODY="${BODY}\n| Page | Screenshot |"
             BODY="${BODY}\n|------|-----------|"
 
+            PHASE="${{ inputs.run_label }}"
             for img in 01-index 02-docker 03-secret-word 04-load-balancer 05-tls; do
-              IMG_URL="${RAW_BASE}/proofs/${provider}/${img}.png"
+              IMG_URL="${RAW_BASE}/proofs/${provider}/${PHASE}/${img}.png"
               BODY="${BODY}\n| \`${img}\` | ![${img}](${IMG_URL}) |"
             done
 
-            CERT_URL="${RAW_BASE}/proofs/${provider}/tls-certificate-info.json"
+            CERT_URL="${RAW_BASE}/proofs/${provider}/${PHASE}/tls-certificate-info.json"
             BODY="${BODY}\n\n<details><summary>🔒 TLS Certificate Info</summary>\n"
             # Try to read the cert file if it exists locally
-            CERT_FILE="proofs/${provider}/tls-certificate-info.json"
+            CERT_FILE="proofs/${provider}/${PHASE}/tls-certificate-info.json"
             if [ -f "$CERT_FILE" ]; then
               BODY="${BODY}\n\`\`\`json\n$(cat "$CERT_FILE")\n\`\`\`"
             else

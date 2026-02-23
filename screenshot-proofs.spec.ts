@@ -23,7 +23,8 @@ import fs from "fs";
 // ── CONFIG (injected by playwright.config.ts) ───────────────────────────────
 const BASE_URL = process.env._QUEST_BASE_URL!;
 const PROVIDER = process.env._QUEST_PROVIDER!;
-const PROOFS_DIR = path.resolve(__dirname, "proofs", PROVIDER);
+const PHASE = process.env._QUEST_PHASE || "discovery";
+const PROOFS_DIR = path.resolve(__dirname, "proofs", PROVIDER, PHASE);
 
 // ── QUEST PAGES ─────────────────────────────────────────────────────────────
 const QUEST_PAGES = [

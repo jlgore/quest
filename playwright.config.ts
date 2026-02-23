@@ -21,9 +21,13 @@ if (!PROVIDERS[provider]) {
   );
 }
 
+// Phase label (discovery, validation, etc.)
+const phase = process.env.QUEST_PHASE || "discovery";
+
 // Expose to test files
 process.env._QUEST_BASE_URL = PROVIDERS[provider];
 process.env._QUEST_PROVIDER = provider;
+process.env._QUEST_PHASE = phase;
 
 export default defineConfig({
   testDir: ".",
